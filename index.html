@@ -5,26 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Windows App Installer</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #1e1e2e; color: #cdd6f4; }
+        body { font-family: 'Segoe UI', sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; background: #1e1e2e; color: #cdd6f4; }
         h1 { color: #89b4fa; }
         h2 { color: #a6e3a1; }
         code { background: #313244; padding: 2px 8px; border-radius: 4px; color: #f9e2af; }
         pre { background: #313244; padding: 15px; border-radius: 8px; overflow-x: auto; }
         .cmd { color: #a6e3a1; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid #45475a; padding: 8px 12px; text-align: left; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.9em; }
+        th, td { border: 1px solid #45475a; padding: 6px 10px; text-align: left; }
         th { background: #313244; color: #89b4fa; }
         tr:hover { background: #313244; }
-        .manual { color: #f38ba8; }
-        .winget { color: #a6e3a1; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
         .badge-winget { background: #a6e3a1; color: #1e1e2e; }
-        .badge-manual { background: #f38ba8; color: #1e1e2e; }
+        .badge-auto { background: #f38ba8; color: #1e1e2e; }
+        .badge-manual { background: #fab387; color: #1e1e2e; }
+        a { color: #89b4fa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .info-link { color: #89b4fa; font-size: 0.85em; }
     </style>
 </head>
 <body>
     <h1>Windows App Installer</h1>
-    <p>Interaktivt PowerShell-script som installerer apper via <strong>winget</strong> med menybasert UI.</p>
+    <p>Interaktivt PowerShell-script som installerer apper via <strong>winget</strong> med menybasert UI. Manuelle apper installeres automatisk via Chocolatey, npm, pip eller direct download. Kun Cisco Packet Tracer krever manuell nedlasting (NetAcad-konto).</p>
 
     <h2>Hurtigstart</h2>
     <p>Åpne PowerShell som Administrator og kjør:</p>
@@ -52,82 +54,93 @@
     <h2>Menyvalg (interaktiv)</h2>
     <table>
         <tr><th>Valg</th><th>Beskrivelse</th></tr>
-        <tr><td>1</td><td>Installer ALLE apper</td></tr>
+        <tr><td>1</td><td>Installer ALLE apper (winget + auto manuell)</td></tr>
         <tr><td>2</td><td>Installer kun winget-apper (automatisk)</td></tr>
-        <tr><td>3</td><td>Velg kategorier (core, media, dev, net, tools, adobe)</td></tr>
+        <tr><td>3</td><td>Velg kategorier (core, media, dev, net, tools, adobe, manual)</td></tr>
         <tr><td>4</td><td>Velg individuelle apper (av/på)</td></tr>
-        <tr><td>5</td><td>Kun manuelle apper (vis lenker)</td></tr>
+        <tr><td>5</td><td>Kun manuelle apper (auto: choco/npm/pip/direct)</td></tr>
         <tr><td>6</td><td>Vis full liste</td></tr>
         <tr><td>Q</td><td>Avslutt</td></tr>
     </table>
 
-    <h2>App-liste</h2>
+    <h2>App-liste med informasjonslenker</h2>
+    <p>Klikk på app-navnet for å gå til offisiell informasjonsside.</p>
     <table>
-        <tr><th>#</th><th>App</th><th>Kategori</th><th>Type</th></tr>
-        <tr><td>1</td><td>Notepad++</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>2</td><td>Mozilla Firefox</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>3</td><td>7-Zip</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>4</td><td>Git</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>5</td><td>Bitwarden</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>6</td><td>PowerShell 7</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>7</td><td>Windows Terminal</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>8</td><td>Media Player Classic HC</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>9</td><td>PotPlayer</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>10</td><td>Stremio</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>11</td><td>VLC</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>12</td><td>Zoom Workplace</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>13</td><td>Neovim</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>14</td><td>VSCodium</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>15</td><td>PowerToys</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>16</td><td>Node.js</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>17</td><td>Python 3.12</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>18</td><td>Tailscale</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>19</td><td>MobaXterm</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>20</td><td>VMware Workstation Pro</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>21</td><td>Wireshark</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>22</td><td>draw.io</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>23</td><td>ShareX</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>24</td><td>OBS Studio</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>25</td><td>Google Chrome</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>26</td><td>Docker Desktop</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>27</td><td>Adobe Acrobat Reader</td><td>adobe</td><td><span class="badge badge-winget">winget</span></td></tr>
-        <tr><td>28</td><td>Cisco Packet Tracer</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>29</td><td>CCCP Codec Pack</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>30</td><td>OpenCode CLI</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>31</td><td>Aider</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>32</td><td>Athas</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>33</td><td>Helix</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
-        <tr><td>34</td><td>Zed</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><th>#</th><th>App</th><th>Kategori</th><th>Type</th><th>Info</th></tr>
+        <tr><td>1</td><td><a href="https://notepad-plus-plus.org">Notepad++</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://notepad-plus-plus.org" class="info-link">notepad-plus-plus.org</a></td></tr>
+        <tr><td>2</td><td><a href="https://www.mozilla.org/firefox">Mozilla Firefox</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.mozilla.org/firefox" class="info-link">mozilla.org</a></td></tr>
+        <tr><td>3</td><td><a href="https://www.7-zip.org">7-Zip</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.7-zip.org" class="info-link">7-zip.org</a></td></tr>
+        <tr><td>4</td><td><a href="https://git-scm.com">Git</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://git-scm.com" class="info-link">git-scm.com</a></td></tr>
+        <tr><td>5</td><td><a href="https://bitwarden.com">Bitwarden</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://bitwarden.com" class="info-link">bitwarden.com</a></td></tr>
+        <tr><td>6</td><td><a href="https://github.com/PowerShell/PowerShell">PowerShell 7</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://github.com/PowerShell/PowerShell" class="info-link">github.com</a></td></tr>
+        <tr><td>7</td><td><a href="https://github.com/microsoft/terminal">Windows Terminal</a></td><td>core</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://github.com/microsoft/terminal" class="info-link">github.com</a></td></tr>
+        <tr><td>8</td><td><a href="https://mpc-hc.org">Media Player Classic HC</a></td><td>media</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://mpc-hc.org" class="info-link">mpc-hc.org</a></td></tr>
+        <tr><td>9</td><td><a href="https://potplayer.daum.net">PotPlayer</a></td><td>media</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://potplayer.daum.net" class="info-link">daum.net</a></td></tr>
+        <tr><td>10</td><td><a href="https://www.stremio.com">Stremio</a></td><td>media</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.stremio.com" class="info-link">stremio.com</a></td></tr>
+        <tr><td>11</td><td><a href="https://www.videolan.org/vlc">VLC</a></td><td>media</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.videolan.org/vlc" class="info-link">videolan.org</a></td></tr>
+        <tr><td>12</td><td><a href="https://zoom.us">Zoom Workplace</a></td><td>media</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://zoom.us" class="info-link">zoom.us</a></td></tr>
+        <tr><td>13</td><td><a href="https://neovim.io">Neovim</a></td><td>dev</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://neovim.io" class="info-link">neovim.io</a></td></tr>
+        <tr><td>14</td><td><a href="https://vscodium.com">VSCodium</a></td><td>dev</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://vscodium.com" class="info-link">vscodium.com</a></td></tr>
+        <tr><td>15</td><td><a href="https://github.com/microsoft/PowerToys">PowerToys</a></td><td>dev</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://github.com/microsoft/PowerToys" class="info-link">github.com</a></td></tr>
+        <tr><td>16</td><td><a href="https://nodejs.org">Node.js</a></td><td>dev</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://nodejs.org" class="info-link">nodejs.org</a></td></tr>
+        <tr><td>17</td><td><a href="https://www.python.org">Python 3.12</a></td><td>dev</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.python.org" class="info-link">python.org</a></td></tr>
+        <tr><td>18</td><td><a href="https://tailscale.com">Tailscale</a></td><td>net</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://tailscale.com" class="info-link">tailscale.com</a></td></tr>
+        <tr><td>19</td><td><a href="https://mobaxterm.mobatek.net">MobaXterm</a></td><td>net</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://mobaxterm.mobatek.net" class="info-link">mobatek.net</a></td></tr>
+        <tr><td>20</td><td><a href="https://www.vmware.com/products/workstation-pro.html">VMware Workstation Pro</a></td><td>net</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.vmware.com/products/workstation-pro.html" class="info-link">vmware.com</a></td></tr>
+        <tr><td>21</td><td><a href="https://www.wireshark.org">Wireshark</a></td><td>net</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.wireshark.org" class="info-link">wireshark.org</a></td></tr>
+        <tr><td>22</td><td><a href="https://www.drawio.com">draw.io</a></td><td>tools</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.drawio.com" class="info-link">drawio.com</a></td></tr>
+        <tr><td>23</td><td><a href="https://getsharex.com">ShareX</a></td><td>tools</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://getsharex.com" class="info-link">getsharex.com</a></td></tr>
+        <tr><td>24</td><td><a href="https://obsproject.com">OBS Studio</a></td><td>tools</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://obsproject.com" class="info-link">obsproject.com</a></td></tr>
+        <tr><td>25</td><td><a href="https://www.google.com/chrome">Google Chrome</a></td><td>tools</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.google.com/chrome" class="info-link">google.com</a></td></tr>
+        <tr><td>26</td><td><a href="https://www.docker.com/products/docker-desktop">Docker Desktop</a></td><td>tools</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.docker.com/products/docker-desktop" class="info-link">docker.com</a></td></tr>
+        <tr><td>27</td><td><a href="https://www.adobe.com/acrobat/pdf-reader.html">Adobe Acrobat Reader</a></td><td>adobe</td><td><span class="badge badge-winget">winget</span></td><td><a href="https://www.adobe.com/acrobat/pdf-reader.html" class="info-link">adobe.com</a></td></tr>
+        <tr><td>28</td><td><a href="https://www.netacad.com/cisco-packet-tracer">Cisco Packet Tracer</a></td><td>manual</td><td><span class="badge badge-manual">manuell</span></td><td><a href="https://www.netacad.com/cisco-packet-tracer" class="info-link">netacad.com</a> (krever konto)</td></tr>
+        <tr><td>29</td><td><a href="https://www.cccp-project.net/">CCCP Codec Pack</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://www.cccp-project.net/" class="info-link">cccp-project.net</a> (choco/direct)</td></tr>
+        <tr><td>30</td><td><a href="https://opencode.ai">OpenCode CLI</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://opencode.ai" class="info-link">opencode.ai</a> (npm)</td></tr>
+        <tr><td>31</td><td><a href="https://aider.chat">Aider</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://aider.chat" class="info-link">aider.chat</a> (pip)</td></tr>
+        <tr><td>32</td><td><a href="https://athas.dev">Athas</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://athas.dev" class="info-link">athas.dev</a> (direct)</td></tr>
+        <tr><td>33</td><td><a href="https://helix-editor.com">Helix</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://helix-editor.com" class="info-link">helix-editor.com</a> (choco/direct)</td></tr>
+        <tr><td>34</td><td><a href="https://zed.dev">Zed</a></td><td>manual</td><td><span class="badge badge-auto">auto</span></td><td><a href="https://zed.dev" class="info-link">zed.dev</a> (choco/direct)</td></tr>
     </table>
 
-    <p><strong>Totalt: 34 apper (27 winget + 7 manuell)</strong></p>
+    <p><strong>Totalt: 34 apper (27 winget + 7 manuell, hvorav 6 auto + 1 manuell)</strong></p>
 
-    <h2>Manuelle apper (ikke i winget)</h2>
+    <h2>Manuelle apper (kun Cisco Packet Tracer MÅ gjøres manuelt)</h2>
     <table>
-        <tr><th>App</th><th>Last ned fra</th></tr>
-        <tr><td>Cisco Packet Tracer</td><td><a href="https://www.netacad.com/cisco-packet-tracer">netacad.com</a> (krever NetAcad-konto)</td></tr>
-        <tr><td>CCCP Codec Pack</td><td><a href="https://www.cccp-project.net/">cccp-project.net</a></td></tr>
-        <tr><td>OpenCode CLI</td><td><code>npm install -g opencode</code> eller <a href="https://opencode.ai">opencode.ai</a></td></tr>
-        <tr><td>Aider</td><td><code>pip install aider-chat</code> eller <a href="https://aider.chat">aider.chat</a></td></tr>
-        <tr><td>Athas</td><td><a href="https://athas.dev">athas.dev</a></td></tr>
-        <tr><td>Helix</td><td><a href="https://helix-editor.com">helix-editor.com</a></td></tr>
-        <tr><td>Zed</td><td><a href="https://zed.dev">zed.dev</a></td></tr>
+        <tr><th>App</th><th>Metode</th><th>Lenke</th></tr>
+        <tr><td>Cisco Packet Tracer</td><td><span class="badge badge-manual">manuell</span> (NetAcad-konto)</td><td><a href="https://www.netacad.com/cisco-packet-tracer">netacad.com</a></td></tr>
+        <tr><td>CCCP Codec Pack</td><td><span class="badge badge-auto">auto</span> Chocolatey → direct download</td><td><a href="https://www.cccp-project.net/">cccp-project.net</a></td></tr>
+        <tr><td>OpenCode CLI</td><td><span class="badge badge-auto">auto</span> npm install -g opencode</td><td><a href="https://opencode.ai">opencode.ai</a></td></tr>
+        <tr><td>Aider</td><td><span class="badge badge-auto">auto</span> pip install aider-chat</td><td><a href="https://aider.chat">aider.chat</a></td></tr>
+        <tr><td>Athas</td><td><span class="badge badge-auto">auto</span> Direct download + silent install</td><td><a href="https://athas.dev">athas.dev</a></td></tr>
+        <tr><td>Helix</td><td><span class="badge badge-auto">auto</span> Chocolatey → direct download</td><td><a href="https://helix-editor.com">helix-editor.com</a></td></tr>
+        <tr><td>Zed</td><td><span class="badge badge-auto">auto</span> Chocolatey → direct download</td><td><a href="https://zed.dev">zed.dev</a></td></tr>
+    </table>
+
+    <h2>Pakkebehandlere</h2>
+    <p>Scriptet spør om å installere <strong>Chocolatey</strong> eller <strong>Scoop</strong> hvis nødvendig for manuelle apper.</p>
+    <table>
+        <tr><th>Behandler</th><th>Beskrivelse</th><th>URL</th></tr>
+        <tr><td>Winget</td><td>Innebygd i Windows 10/11 (primær)</td><td><a href="https://learn.microsoft.com/windows/package-manager/winget/">docs</a></td></tr>
+        <tr><td>Chocolatey</td><td>Populær Windows-pakkebehandler</td><td><a href="https://chocolatey.org">chocolatey.org</a></td></tr>
+        <tr><td>Scoop</td><td>Alternativ pakkebehandler (ingen admin)</td><td><a href="https://scoop.sh">scoop.sh</a></td></tr>
+        <tr><td>Ninite</td><td>Enkel batch-installer (ingen CLI)</td><td><a href="https://ninite.com">ninite.com</a></td></tr>
     </table>
 
     <h2>Andre apper som kan passe</h2>
     <p>Basert på din bruk (lærer, IM-fag, nettverk, virtualisering, media, koding):</p>
     <table>
-        <tr><th>App</th><th>Begrunnelse</th><th>winget-ID</th></tr>
-        <tr><td>VLC</td><td>Media-avspilling (allrounder)</td><td>VideoLAN.VLC</td></tr>
-        <tr><td>Wireshark</td><td>Nettverksanalyse (undervisning)</td><td>WiresharkFoundation.Wireshark</td></tr>
-        <tr><td>OBS Studio</td><td>Skjermopptak/streaming</td><td>OBSProject.OBSStudio</td></tr>
-        <tr><td>Node.js</td><td>JavaScript-runtime</td><td>OpenJS.NodeJS</td></tr>
-        <tr><td>Python</td><td>Scripting/undervisning</td><td>Python.Python.3.12</td></tr>
-        <tr><td>Docker Desktop</td><td>Containere</td><td>Docker.DockerDesktop</td></tr>
-        <tr><td>BalenaEtcher</td><td>Skrive ISO til USB</td><td>Balena.Etcher</td></tr>
-        <tr><td>Rufus</td><td>Skrive ISO til USB</td><td>Rufus.Rufus</td></tr>
-        <tr><td>Adobe Acrobat Reader</td><td>PDF-visning</td><td>Adobe.Acrobat.Reader.64-bit</td></tr>
-        <tr><td>Google Chrome</td><td>Nettleser (alternativ til Firefox)</td><td>Google.Chrome</td></tr>
+        <tr><th>App</th><th>Begrunnelse</th><th>winget-ID</th><th>Info</th></tr>
+        <tr><td><a href="https://www.videolan.org/vlc">VLC</a></td><td>Media-avspilling (allrounder)</td><td>VideoLAN.VLC</td><td><a href="https://www.videolan.org/vlc" class="info-link">videolan.org</a></td></tr>
+        <tr><td><a href="https://www.wireshark.org">Wireshark</a></td><td>Nettverksanalyse (undervisning)</td><td>WiresharkFoundation.Wireshark</td><td><a href="https://www.wireshark.org" class="info-link">wireshark.org</a></td></tr>
+        <tr><td><a href="https://obsproject.com">OBS Studio</a></td><td>Skjermopptak/streaming</td><td>OBSProject.OBSStudio</td><td><a href="https://obsproject.com" class="info-link">obsproject.com</a></td></tr>
+        <tr><td><a href="https://nodejs.org">Node.js</a></td><td>JavaScript-runtime</td><td>OpenJS.NodeJS</td><td><a href="https://nodejs.org" class="info-link">nodejs.org</a></td></tr>
+        <tr><td><a href="https://www.python.org">Python</a></td><td>Scripting/undervisning</td><td>Python.Python.3.12</td><td><a href="https://www.python.org" class="info-link">python.org</a></td></tr>
+        <tr><td><a href="https://www.docker.com/products/docker-desktop">Docker Desktop</a></td><td>Containere</td><td>Docker.DockerDesktop</td><td><a href="https://www.docker.com/products/docker-desktop" class="info-link">docker.com</a></td></tr>
+        <tr><td><a href="https://etcher.balena.io">BalenaEtcher</a></td><td>Skrive ISO til USB</td><td>Balena.Etcher</td><td><a href="https://etcher.balena.io" class="info-link">balena.io</a></td></tr>
+        <tr><td><a href="https://rufus.ie">Rufus</a></td><td>Skrive ISO til USB</td><td>Rufus.Rufus</td><td><a href="https://rufus.ie" class="info-link">rufus.ie</a></td></tr>
+        <tr><td><a href="https://www.adobe.com/acrobat/pdf-reader.html">Adobe Acrobat Reader</a></td><td>PDF-visning</td><td>Adobe.Acrobat.Reader.64-bit</td><td><a href="https://www.adobe.com/acrobat/pdf-reader.html" class="info-link">adobe.com</a></td></tr>
+        <tr><td><a href="https://www.google.com/chrome">Google Chrome</a></td><td>Nettleser (alternativ til Firefox)</td><td>Google.Chrome</td><td><a href="https://www.google.com/chrome" class="info-link">google.com</a></td></tr>
     </table>
 
     <p style="margin-top: 30px; color: #6c7086; font-size: 0.9em;">
