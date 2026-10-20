@@ -12,6 +12,68 @@ param(
 )
 
 # ============================================================
+# SJEEKK: WINGET TILGJENGELIG
+# ============================================================
+
+function Test-Winget {
+    return (Get-Command winget -ErrorAction SilentlyContinue) -ne $null
+}
+
+function Install-Winget {
+    Write-Host "`n=== Winget er ikke installert ===" -ForegroundColor Red
+    Write-Host "Winget er nødvendig for å installere apper." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Alternativer:" -ForegroundColor White
+    Write-Host "  [1] Åpne Microsoft Store (App Installer)" -ForegroundColor White
+    Write-Host "  [2] Last ned fra GitHub (winget-cli)" -ForegroundColor White
+    Write-Host "  [3] Avbryt" -ForegroundColor Red
+    Write-Host ""
+    $choice = Read-Host "Valg"
+    
+    switch ($choice) {
+        "1" {
+            Write-Host "  Åpner Microsoft Store..." -ForegroundColor Yellow
+            Start-Process "ms-windows-store://pdp/?productid=9NBLGGH4NNS1"
+            Write-Host "  Installer 'App Installer' fra Store, deretter kjør scriptet på nytt." -ForegroundColor Yellow
+            return $false
+        }
+        "2" {
+            Write-Host "  Laster ned winget fra GitHub..." -ForegroundColor Yellow
+            $latestRelease = "https://github.com/microsoft/winget-cli/releases/latest/download/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+            $tempFile = "$env:TEMP\winget.msixbundle"
+            try {
+                Invoke-WebRequest -Uri $latestRelease -OutFile $tempFile -UseBasicParsing -ErrorAction Stop
+                Write-Host "  Installerer..." -ForegroundColor Yellow
+                Add-AppxPackage -Path $tempFile
+                if (Test-Winget) {
+                    Write-Host "  OK: Winget installert" -ForegroundColor Green
+                    return $true
+                } else {
+                    Write-Host "  FEIL: Winget ble ikke installert. Prøv Microsoft Store." -ForegroundColor Red
+                    return $false
+                }
+            } catch {
+                Write-Host "  Nedlasting feilet: $($_.Exception.Message)" -ForegroundColor Red
+                Write-Host "  Prøv Microsoft Store i stedet." -ForegroundColor Yellow
+                return $false
+            }
+        }
+        default {
+            Write-Host "  Avbrutt." -ForegroundColor Red
+            return $false
+        }
+    }
+}
+
+if (-not (Test-Winget)) {
+    $installed = Install-Winget
+    if (-not $installed) {
+        Write-Host "`nWinget er nødvendig. Installer det og kjør scriptet på nytt." -ForegroundColor Red
+        exit
+    }
+}
+
+# ============================================================
 # APP-DEFINISJONER
 # ============================================================
 
