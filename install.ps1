@@ -4,8 +4,8 @@
 
 param(
     [switch]$All,           # Installer alt uten meny
-    [switch]$Core,          # Kun core-apps
-    [switch]$Dev,           # Kun dev-apps
+    [switch]$Core,          # Kun core-apper
+    [switch]$Dev,           # Kun dev-apper
     [switch]$List,          # Vis liste og avslutt
     [string]$Skip = "",     # Kommaseparerte apper å hoppe over
     [switch]$Help           # Vis hjelp
@@ -15,8 +15,8 @@ param(
 # APP-DEFINISJONER
 # ============================================================
 
-# Format: @{ id = "winget-id"; name = "Visningsnavn"; category = "kategori"; manual = $false; url = "" }
-# manual = $true betyr at appen ikke er i winget og må lastes ned manuelt
+# Format: @{ id = "winget-id"; name = "Visningsnavn"; cat = "kategori"; manual = $false; url = "" }
+# manual = $true betyr at appen ikke er i winget og installeres manuelt/automatisk
 
 $apps = @(
     # --- Core (alle trenger) ---
@@ -69,6 +69,118 @@ $apps = @(
 )
 
 # ============================================================
+# MANUELLE APPER — AUTOMATISK INSTALLASJON
+# ============================================================
+
+# Direct download URLs for manual apps
+$manualDownloads = @{
+    "CCCP" = @{
+        url = "https://www.cccp-project.net/downloads/latest/CCCP-2022-10-09.exe"
+        installer = "CCCP-Setup.exe"
+        args = "/S"
+        fallback = "https://www.cccp-project.net/"
+    }
+    "Helix" = @{
+        url = "https://github.com/helix-editor/helix/releases/latest/download/helix-x86_64-windows.zip"
+        installer = "helix.zip"
+        extract = $true
+        fallback = "https://helix-editor.com"
+    }
+    "Zed" = @{
+        url = "https://github.com/zed-industries/zed/releases/latest/download/Zed-x86_64.exe"
+        installer = "Zed-Setup.exe"
+        args = "/S"
+        fallback = "https://zed.dev"
+    }
+    "Athas" = @{
+        url = "https://athas.dev/download/windows"
+        installer = "Athas-Setup.exe"
+        args = "/S"
+        fallback = "https://athas.dev"
+    }
+}
+
+function Install-ManualApp {
+    param([hashtable]$app)
+    
+    Write-Host "`n--- Manuell app: $($app.name) ---" -ForegroundColor Magenta
+    
+    # npm-baserte verktøy
+    if ($app.id -eq "OpenCodeCLI") {
+        if (Get-Command npm -ErrorAction SilentlyContinue) {
+            Write-Host "  Installerer via npm..." -ForegroundColor Yellow
+            npm install -g opencode 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "  OK: OpenCode CLI installert" -ForegroundColor Green
+            } else {
+                Write-Host "  FEIL: npm install feilet" -ForegroundColor Red
+                Write-Host "  Lenke: https://opencode.ai" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "  npm ikke funnet — installer Node.js først" -ForegroundColor Red
+            Write-Host "  Lenke: https://opencode.ai" -ForegroundColor Yellow
+        }
+        return
+    }
+    
+    # pip-baserte verktøy
+    if ($app.id -eq "Aider") {
+        if (Get-Command pip -ErrorAction SilentlyContinue) {
+            Write-Host "  Installerer via pip..." -ForegroundColor Yellow
+            pip install aider-chat 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "  OK: Aider installert" -ForegroundColor Green
+            } else {
+                Write-Host "  FEIL: pip install feilet" -ForegroundColor Red
+                Write-Host "  Lenke: https://aider.chat" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "  pip ikke funnet — installer Python først" -ForegroundColor Red
+            Write-Host "  Lenke: https://aider.chat" -ForegroundColor Yellow
+        }
+        return
+    }
+    
+    # Cisco Packet Tracer — krever NetAcad-konto
+    if ($app.id -eq "CiscoPacketTracer") {
+        Write-Host "  Krever NetAcad-konto — kan ikke automatiseres" -ForegroundColor Red
+        Write-Host "  Last ned fra: https://www.netacad.com/cisco-packet-tracer" -ForegroundColor Yellow
+        Start-Process "https://www.netacad.com/cisco-packet-tracer"
+        return
+    }
+    
+    # Direct download + silent install
+    $dl = $manualDownloads[$app.id]
+    if ($dl) {
+        $tempDir = "$env:TEMP\manual-install"
+        if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir | Out-Null }
+        $installerPath = Join-Path $tempDir $dl.installer
+        
+        Write-Host "  Laster ned $($app.name)..." -ForegroundColor Yellow
+        try {
+            Invoke-WebRequest -Uri $dl.url -OutFile $installerPath -UseBasicParsing -ErrorAction Stop
+            if ($dl.extract) {
+                Write-Host "  Pakker ut..." -ForegroundColor Yellow
+                Expand-Archive -Path $installerPath -DestinationPath "$tempDir\$($app.id)" -Force
+                Write-Host "  OK: $($app.name) pakket ut til $tempDir\$($app.id)" -ForegroundColor Green
+            } else {
+                Write-Host "  Installerer..." -ForegroundColor Yellow
+                Start-Process -FilePath $installerPath -ArgumentList $dl.args -Wait -NoNewWindow
+                Write-Host "  OK: $($app.name) installert" -ForegroundColor Green
+            }
+        } catch {
+            Write-Host "  Nedlasting feilet: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "  Lenke: $($dl.fallback)" -ForegroundColor Yellow
+            Start-Process $dl.fallback
+        }
+    } else {
+        Write-Host "  Ingen automatisk installasjon tilgjengelig" -ForegroundColor Red
+        Write-Host "  Lenke: $($app.url)" -ForegroundColor Yellow
+        Start-Process $app.url
+    }
+}
+
+# ============================================================
 # HJELPEFUNKSJONER
 # ============================================================
 
@@ -85,11 +197,11 @@ function Show-Menu {
     Show-Header
     Write-Host "Velg installasjonsmodus:" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  [1] Installer ALLE apper (winget + manuell liste)" -ForegroundColor White
+    Write-Host "  [1] Installer ALLE apper (winget + manuell auto)" -ForegroundColor White
     Write-Host "  [2] Installer KUN winget-apper (automatisk)" -ForegroundColor White
-    Write-Host "  [3] Velg kategorier (core, media, dev, net, tools, adobe)" -ForegroundColor White
+    Write-Host "  [3] Velg kategorier (core, media, dev, net, tools, adobe, manual)" -ForegroundColor White
     Write-Host "  [4] Velg individuelle apper (av/på)" -ForegroundColor White
-    Write-Host "  [5] Kun manuelle apper (vis lenker)" -ForegroundColor White
+    Write-Host "  [5] Kun manuelle apper (automatisk installasjon)" -ForegroundColor White
     Write-Host "  [6] Vis full liste og avslutt" -ForegroundColor White
     Write-Host "  [Q] Avslutt" -ForegroundColor Red
     Write-Host ""
@@ -100,7 +212,7 @@ function Show-AppList {
     Write-Host "`n=== $title ===" -ForegroundColor Cyan
     $i = 1
     foreach ($app in $appList) {
-        $status = if ($app.manual) { "[MANUELL]" } else { "[winget]" }
+        $status = if ($app.manual) { "[MANUELL-AUTO]" } else { "[winget]" }
         $color = if ($app.manual) { "Magenta" } else { "Green" }
         Write-Host ("  {0,3}. {1,-35} {2}" -f $i, $app.name, $status) -ForegroundColor $color
         $i++
@@ -122,11 +234,12 @@ function Install-WingetApp {
 
 function Show-ManualApps {
     param([array]$appList)
-    Write-Host "`n=== Manuelle apper (ikke i winget) ===" -ForegroundColor Magenta
+    Write-Host "`n=== Manuelle apper (automatisk installasjon) ===" -ForegroundColor Magenta
     foreach ($app in $appList) {
         if ($app.manual) {
             Write-Host "  $($app.name)" -ForegroundColor Magenta
-            Write-Host "    Last ned: $($app.url)" -ForegroundColor Yellow
+            Write-Host "    Metode: $(if ($app.id -eq 'OpenCodeCLI') { 'npm install -g opencode' } elseif ($app.id -eq 'Aider') { 'pip install aider-chat' } elseif ($app.id -eq 'CiscoPacketTracer') { 'NetAcad (krever konto)' } else { 'Direct download + silent install' })" -ForegroundColor Yellow
+            Write-Host "    Lenke: $($app.url)" -ForegroundColor Yellow
         }
     }
     Write-Host ""
@@ -143,7 +256,10 @@ function Install-Selected {
     }
 
     if ($manualApps.Count -gt 0) {
-        Show-ManualApps -appList $manualApps
+        Write-Host "`n=== Installerer $($manualApps.Count) manuelle apper (automatisk) ===" -ForegroundColor Magenta
+        foreach ($app in $manualApps) {
+            Install-ManualApp -app $app
+        }
     }
 
     Write-Host "`n=== Ferdig! ===" -ForegroundColor Green
@@ -176,7 +292,7 @@ if ($List) {
     Show-AppList -appList $apps -title "Alle apper ($($apps.Count) totalt)"
     $wingetCount = ($apps | Where-Object { -not $_.manual }).Count
     $manualCount = ($apps | Where-Object { $_.manual }).Count
-    Write-Host "Winget: $wingetCount | Manuell: $manualCount" -ForegroundColor Cyan
+    Write-Host "Winget: $wingetCount | Manuell (auto): $manualCount" -ForegroundColor Cyan
     exit
 }
 
@@ -192,7 +308,6 @@ if ($All) {
 }
 
 if ($Core) {
-    $selected = $apps | Where-Object { $_.cat -eq "core" -or $_.manual -eq $false -and $_.cat -eq "core" }
     Install-Selected -selected ($apps | Where-Object { $_.cat -eq "core" })
     exit
 }
@@ -260,13 +375,19 @@ while ($true) {
         "5" {
             $manualApps = $apps | Where-Object { $_.manual }
             Show-ManualApps -appList $manualApps
+            $confirm = Read-Host "Installer manuelle apper automatisk? (j/n)"
+            if ($confirm -eq "j") {
+                foreach ($app in $manualApps) {
+                    Install-ManualApp -app $app
+                }
+            }
             Read-Host "`nTrykk Enter for å fortsette"
         }
         "6" {
             Show-AppList -appList $apps -title "Alle apper ($($apps.Count) totalt)"
             $wingetCount = ($apps | Where-Object { -not $_.manual }).Count
             $manualCount = ($apps | Where-Object { $_.manual }).Count
-            Write-Host "Winget: $wingetCount | Manuell: $manualCount" -ForegroundColor Cyan
+            Write-Host "Winget: $wingetCount | Manuell (auto): $manualCount" -ForegroundColor Cyan
             Read-Host "`nTrykk Enter for å fortsette"
         }
         "q" { exit }
