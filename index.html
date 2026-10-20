@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows App Installer</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #1e1e2e; color: #cdd6f4; }
+        h1 { color: #89b4fa; }
+        h2 { color: #a6e3a1; }
+        code { background: #313244; padding: 2px 8px; border-radius: 4px; color: #f9e2af; }
+        pre { background: #313244; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .cmd { color: #a6e3a1; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #45475a; padding: 8px 12px; text-align: left; }
+        th { background: #313244; color: #89b4fa; }
+        tr:hover { background: #313244; }
+        .manual { color: #f38ba8; }
+        .winget { color: #a6e3a1; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; }
+        .badge-winget { background: #a6e3a1; color: #1e1e2e; }
+        .badge-manual { background: #f38ba8; color: #1e1e2e; }
+    </style>
+</head>
+<body>
+    <h1>Windows App Installer</h1>
+    <p>Interaktivt PowerShell-script som installerer apper via <strong>winget</strong> med menybasert UI.</p>
+
+    <h2>Hurtigstart</h2>
+    <p>Åpne PowerShell som Administrator og kjør:</p>
+    <pre><code class="cmd">irm https://olewol.github.io/windows-installer/install.ps1 | iex</code></pre>
+
+    <h2>Parametere</h2>
+    <pre><code># Installer alt uten meny
+.\install.ps1 -All
+
+# Kun core-apper
+.\install.ps1 -Core
+
+# Kun dev-apper
+.\install.ps1 -Dev
+
+# Vis full liste
+.\install.ps1 -List
+
+# Hopp over spesifikke apper
+.\install.ps1 -All -Skip "Git,7-Zip"
+
+# Hjelp
+.\install.ps1 -Help</code></pre>
+
+    <h2>Menyvalg (interaktiv)</h2>
+    <table>
+        <tr><th>Valg</th><th>Beskrivelse</th></tr>
+        <tr><td>1</td><td>Installer ALLE apper</td></tr>
+        <tr><td>2</td><td>Installer kun winget-apper (automatisk)</td></tr>
+        <tr><td>3</td><td>Velg kategorier (core, media, dev, net, tools, adobe)</td></tr>
+        <tr><td>4</td><td>Velg individuelle apper (av/på)</td></tr>
+        <tr><td>5</td><td>Kun manuelle apper (vis lenker)</td></tr>
+        <tr><td>6</td><td>Vis full liste</td></tr>
+        <tr><td>Q</td><td>Avslutt</td></tr>
+    </table>
+
+    <h2>App-liste</h2>
+    <table>
+        <tr><th>#</th><th>App</th><th>Kategori</th><th>Type</th></tr>
+        <tr><td>1</td><td>Notepad++</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>2</td><td>Mozilla Firefox</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>3</td><td>7-Zip</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>4</td><td>Git</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>5</td><td>Bitwarden</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>6</td><td>PowerShell 7</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>7</td><td>Windows Terminal</td><td>core</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>8</td><td>Media Player Classic HC</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>9</td><td>PotPlayer</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>10</td><td>Stremio</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>11</td><td>VLC</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>12</td><td>Zoom Workplace</td><td>media</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>13</td><td>Neovim</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>14</td><td>VSCodium</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>15</td><td>PowerToys</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>16</td><td>Node.js</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>17</td><td>Python 3.12</td><td>dev</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>18</td><td>Tailscale</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>19</td><td>MobaXterm</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>20</td><td>VMware Workstation Pro</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>21</td><td>Wireshark</td><td>net</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>22</td><td>draw.io</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>23</td><td>ShareX</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>24</td><td>OBS Studio</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>25</td><td>Google Chrome</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>26</td><td>Docker Desktop</td><td>tools</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>27</td><td>Adobe Acrobat Reader</td><td>adobe</td><td><span class="badge badge-winget">winget</span></td></tr>
+        <tr><td>28</td><td>Cisco Packet Tracer</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>29</td><td>CCCP Codec Pack</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>30</td><td>OpenCode CLI</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>31</td><td>Aider</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>32</td><td>Athas</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>33</td><td>Helix</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+        <tr><td>34</td><td>Zed</td><td>manual</td><td><span class="badge badge-manual">manuell</span></td></tr>
+    </table>
+
+    <p><strong>Totalt: 34 apper (27 winget + 7 manuell)</strong></p>
+
+    <h2>Manuelle apper (ikke i winget)</h2>
+    <table>
+        <tr><th>App</th><th>Last ned fra</th></tr>
+        <tr><td>Cisco Packet Tracer</td><td><a href="https://www.netacad.com/cisco-packet-tracer">netacad.com</a> (krever NetAcad-konto)</td></tr>
+        <tr><td>CCCP Codec Pack</td><td><a href="https://www.cccp-project.net/">cccp-project.net</a></td></tr>
+        <tr><td>OpenCode CLI</td><td><code>npm install -g opencode</code> eller <a href="https://opencode.ai">opencode.ai</a></td></tr>
+        <tr><td>Aider</td><td><code>pip install aider-chat</code> eller <a href="https://aider.chat">aider.chat</a></td></tr>
+        <tr><td>Athas</td><td><a href="https://athas.dev">athas.dev</a></td></tr>
+        <tr><td>Helix</td><td><a href="https://helix-editor.com">helix-editor.com</a></td></tr>
+        <tr><td>Zed</td><td><a href="https://zed.dev">zed.dev</a></td></tr>
+    </table>
+
+    <h2>Andre apper som kan passe</h2>
+    <p>Basert på din bruk (lærer, IM-fag, nettverk, virtualisering, media, koding):</p>
+    <table>
+        <tr><th>App</th><th>Begrunnelse</th><th>winget-ID</th></tr>
+        <tr><td>VLC</td><td>Media-avspilling (allrounder)</td><td>VideoLAN.VLC</td></tr>
+        <tr><td>Wireshark</td><td>Nettverksanalyse (undervisning)</td><td>WiresharkFoundation.Wireshark</td></tr>
+        <tr><td>OBS Studio</td><td>Skjermopptak/streaming</td><td>OBSProject.OBSStudio</td></tr>
+        <tr><td>Node.js</td><td>JavaScript-runtime</td><td>OpenJS.NodeJS</td></tr>
+        <tr><td>Python</td><td>Scripting/undervisning</td><td>Python.Python.3.12</td></tr>
+        <tr><td>Docker Desktop</td><td>Containere</td><td>Docker.DockerDesktop</td></tr>
+        <tr><td>BalenaEtcher</td><td>Skrive ISO til USB</td><td>Balena.Etcher</td></tr>
+        <tr><td>Rufus</td><td>Skrive ISO til USB</td><td>Rufus.Rufus</td></tr>
+        <tr><td>Adobe Acrobat Reader</td><td>PDF-visning</td><td>Adobe.Acrobat.Reader.64-bit</td></tr>
+        <tr><td>Google Chrome</td><td>Nettleser (alternativ til Firefox)</td><td>Google.Chrome</td></tr>
+    </table>
+
+    <p style="margin-top: 30px; color: #6c7086; font-size: 0.9em;">
+        Laget med winget. Kildekode: <a href="https://github.com/Olewol/windows-installer">GitHub</a>
+    </p>
+</body>
+</html>
