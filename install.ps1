@@ -15,11 +15,6 @@ param(
 # APP-DEFINISJONER
 # ============================================================
 
-# Format: @{ id = "winget-id"; name = "Visningsnavn"; cat = "kategori"; manual = $false; url = "info-url"; choco = "choco-id" }
-# manual = $true betyr at appen ikke er i winget
-# choco = chocolatey pakke-ID (hvis tilgjengelig)
-# url = lenke til programinformasjon
-
 $apps = @(
     # --- Core (alle trenger) ---
     @{ id = "Notepad++.Notepad++";       name = "Notepad++";              cat = "core"; manual = $false; url = "https://notepad-plus-plus.org"; choco = $null },
@@ -61,8 +56,6 @@ $apps = @(
     @{ id = "Adobe.Acrobat.Reader.64-bit"; name = "Adobe Acrobat Reader (64-bit)"; cat = "adobe"; manual = $false; url = "https://www.adobe.com/acrobat/pdf-reader.html"; choco = $null },
 
     # --- Manuelle (ikke i winget) ---
-    # Kun Cisco Packet Tracer MÅ kjøres manuelt (krever NetAcad-konto)
-    # Resten installeres automatisk via choco/npm/pip/direct download
     @{ id = "CiscoPacketTracer";         name = "Cisco Packet Tracer";   cat = "manual"; manual = $true; url = "https://www.netacad.com/cisco-packet-tracer"; choco = $null },
     @{ id = "CCCP";                     name = "CCCP Codec Pack";       cat = "manual"; manual = $true; url = "https://www.cccp-project.net/"; choco = "cccp" },
     @{ id = "OpenCodeCLI";              name = "OpenCode CLI (AI)";     cat = "manual"; manual = $true; url = "https://opencode.ai"; choco = $null },
@@ -73,54 +66,36 @@ $apps = @(
 )
 
 # ============================================================
-# PAKKEBEHANDLERE — Chocolatey / Scoop / Ninite
+# PAKKEBEHANDLERE
 # ============================================================
 
-function Test-Choco {
-    return (Get-Command choco -ErrorAction SilentlyContinue) -ne $null
-}
-
-function Test-Scoop {
-    return (Get-Command scoop -ErrorAction SilentlyContinue) -ne $null
-}
+function Test-Choco { return (Get-Command choco -ErrorAction SilentlyContinue) -ne $null }
+function Test-Scoop { return (Get-Command scoop -ErrorAction SilentlyContinue) -ne $null }
 
 function Install-Choco {
     Write-Host "`n=== Installerer Chocolatey ===" -ForegroundColor Yellow
-    Write-Host "Dette installerer Chocolatey pakkebehandler." -ForegroundColor White
-    $confirm = Read-Host "Bekreft? (j/n)"
+    $confirm = Read-Host "Bekreft installasjon av Chocolatey? (j/n)"
     if ($confirm -ne "j") { return $false }
-    
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    if (Test-Choco) {
-        Write-Host "  OK: Chocolatey installert" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host "  FEIL: Chocolatey-installasjon feilet" -ForegroundColor Red
-        return $false
-    }
+    if (Test-Choco) { Write-Host "  OK: Chocolatey installert" -ForegroundColor Green; return $true }
+    Write-Host "  FEIL: Chocolatey-installasjon feilet" -ForegroundColor Red
+    return $false
 }
 
 function Install-Scoop {
     Write-Host "`n=== Installerer Scoop ===" -ForegroundColor Yellow
-    Write-Host "Dette installerer Scoop pakkebehandler." -ForegroundColor White
-    $confirm = Read-Host "Bekreft? (j/n)"
+    $confirm = Read-Host "Bekreft installasjon av Scoop? (j/n)"
     if ($confirm -ne "j") { return $false }
-    
     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
     Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-    if (Test-Scoop) {
-        Write-Host "  OK: Scoop installert" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host "  FEIL: Scoop-installasjon feilet" -ForegroundColor Red
-        return $false
-    }
+    if (Test-Scoop) { Write-Host "  OK: Scoop installert" -ForegroundColor Green; return $true }
+    Write-Host "  FEIL: Scoop-installasjon feilet" -ForegroundColor Red
+    return $false
 }
 
 function Get-PackageManager {
-    # Returnerer tilgjengelig pakkebehandler: "choco", "scoop", eller $null
     if (Test-Choco) { return "choco" }
     if (Test-Scoop) { return "scoop" }
     return $null
@@ -128,19 +103,93 @@ function Get-PackageManager {
 
 function Prompt-InstallPackageManager {
     Write-Host "`n=== Ingen alternativ pakkebehandler funnet ===" -ForegroundColor Yellow
-    Write-Host "Noen apper (CCCP, Helix, Zed) er ikke i winget." -ForegroundColor White
-    Write-Host "Chocolatey kan installere dem automatisk." -ForegroundColor White
-    Write-Host ""
+    Write-Host "Noen apper er ikke i winget og trenger Chocolatey/Scoop." -ForegroundColor White
     $choice = Read-Host "Installer Chocolatey? (j/n)"
-    if ($choice -eq "j") {
-        return Install-Choco
-    }
+    if ($choice -eq "j") { return Install-Choco }
     $choice2 = Read-Host "Installer Scoop i stedet? (j/n)"
-    if ($choice2 -eq "j") {
-        return Install-Scoop
-    }
-    Write-Host "  Hopper over pakkebehandler — bruker direct download fallback" -ForegroundColor Yellow
+    if ($choice2 -eq "j") { return Install-Scoop }
+    Write-Host "  Hopper over — bruker direct download fallback" -ForegroundColor Yellow
     return $false
+}
+
+# ============================================================
+# INTERAKTIV BEKREFTELSE MED CHECKMARKS
+# ============================================================
+
+function Confirm-InstallList {
+    param([array]$appList, [string]$title = "Bekreft installasjon")
+    
+    $selected = @()
+    foreach ($app in $appList) {
+        $selected += @{ app = $app; checked = $true }
+    }
+    
+    while ($true) {
+        Clear-Host
+        Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "║  $title" -ForegroundColor Cyan
+        Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Apper som vil bli installert:" -ForegroundColor Yellow
+        Write-Host ""
+        
+        $i = 1
+        foreach ($item in $selected) {
+            $check = if ($item.checked) { "[x]" } else { "[ ]" }
+            $color = if ($item.checked) { "Green" } else { "DarkGray" }
+            $type = if ($item.app.manual) { "AUTO" } else { "winget" }
+            Write-Host ("  {0,3}. {1} {2,-35} ({3})" -f $i, $check, $item.app.name, $type) -ForegroundColor $color
+            $i++
+        }
+        
+        $checkedCount = ($selected | Where-Object { $_.checked }).Count
+        Write-Host ""
+        Write-Host "  Valgt: $checkedCount av $($selected.Count) apper" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Kommandoer:" -ForegroundColor Yellow
+        Write-Host "  [nummer]  — toggle app av/på (f.eks. 3,5,7)" -ForegroundColor White
+        Write-Host "  [a]       — velg alle" -ForegroundColor White
+        Write-Host "  [n]       — fjern alle" -ForegroundColor White
+        Write-Host "  [OK]      — bekreft og installer" -ForegroundColor Green
+        Write-Host "  [avbryt]  — avbryt" -ForegroundColor Red
+        Write-Host ""
+        
+        $input = Read-Host "Valg"
+        
+        if ($input -eq "OK" -or $input -eq "ok" -or $input -eq "j") {
+            $toInstall = $selected | Where-Object { $_.checked } | ForEach-Object { $_.app }
+            if ($toInstall.Count -eq 0) {
+                Write-Host "Ingen apper valgt. Avbryter." -ForegroundColor Red
+                Start-Sleep -Seconds 1
+                return $null
+            }
+            return $toInstall
+        }
+        
+        if ($input -eq "avbryt" -or $input -eq "q" -or $input -eq "Q") {
+            return $null
+        }
+        
+        if ($input -eq "a") {
+            foreach ($item in $selected) { $item.checked = $true }
+            continue
+        }
+        
+        if ($input -eq "n") {
+            foreach ($item in $selected) { $item.checked = $false }
+            continue
+        }
+        
+        $nums = $input -split ',' | ForEach-Object { $_.Trim() }
+        foreach ($num in $nums) {
+            if ($num -match '^\d+$') {
+                $idx = [int]$num - 1
+                if ($idx -ge 0 -and $idx -lt $selected.Count) {
+                    $selected[$idx].checked = -not $selected[$idx].checked
+                }
+            }
+        }
+    }
 }
 
 # ============================================================
@@ -165,13 +214,9 @@ function Install-ChocoApp {
     if (-not $chocoId) { return $false }
     Write-Host "`n--- Installerer $($app.name) via Chocolatey ($chocoId) ---" -ForegroundColor Yellow
     choco install $chocoId -y --no-progress 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  OK: $($app.name)" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host "  FEIL: Chocolatey installasjon feilet" -ForegroundColor Red
-        return $false
-    }
+    if ($LASTEXITCODE -eq 0) { Write-Host "  OK: $($app.name)" -ForegroundColor Green; return $true }
+    Write-Host "  FEIL: Chocolatey installasjon feilet" -ForegroundColor Red
+    return $false
 }
 
 function Install-ScoopApp {
@@ -179,13 +224,9 @@ function Install-ScoopApp {
     $scoopId = $app.id.ToLower()
     Write-Host "`n--- Installerer $($app.name) via Scoop ($scoopId) ---" -ForegroundColor Yellow
     scoop install $scoopId 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  OK: $($app.name)" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host "  FEIL: Scoop installasjon feilet" -ForegroundColor Red
-        return $false
-    }
+    if ($LASTEXITCODE -eq 0) { Write-Host "  OK: $($app.name)" -ForegroundColor Green; return $true }
+    Write-Host "  FEIL: Scoop installasjon feilet" -ForegroundColor Red
+    return $false
 }
 
 function Install-ManualApp {
@@ -193,64 +234,49 @@ function Install-ManualApp {
     
     Write-Host "`n--- Manuell app: $($app.name) ---" -ForegroundColor Magenta
     
-    # Cisco Packet Tracer — krever NetAcad-konto, MÅ kjøres manuelt
     if ($app.id -eq "CiscoPacketTracer") {
         Write-Host "  Krever NetAcad-konto — MÅ lastes ned manuelt" -ForegroundColor Red
         Write-Host "  Last ned fra: https://www.netacad.com/cisco-packet-tracer" -ForegroundColor Yellow
-        Write-Host "  (Åpner nettside...)" -ForegroundColor Yellow
         Start-Process "https://www.netacad.com/cisco-packet-tracer"
         return
     }
     
-    # npm-baserte verktøy
     if ($app.id -eq "OpenCodeCLI") {
         if (Get-Command npm -ErrorAction SilentlyContinue) {
             Write-Host "  Installerer via npm..." -ForegroundColor Yellow
             npm install -g opencode 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "  OK: OpenCode CLI installert" -ForegroundColor Green
-            } else {
-                Write-Host "  FEIL: npm install feilet" -ForegroundColor Red
-                Write-Host "  Lenke: https://opencode.ai" -ForegroundColor Yellow
-            }
+            if ($LASTEXITCODE -eq 0) { Write-Host "  OK: OpenCode CLI installert" -ForegroundColor Green }
+            else { Write-Host "  FEIL: npm install feilet" -ForegroundColor Red; Write-Host "  Lenke: https://opencode.ai" -ForegroundColor Yellow }
         } else {
-            Write-Host "  npm ikke funnet — installer Node.js først (er i winget-listen)" -ForegroundColor Red
+            Write-Host "  npm ikke funnet — installer Node.js først" -ForegroundColor Red
             Write-Host "  Lenke: https://opencode.ai" -ForegroundColor Yellow
         }
         return
     }
     
-    # pip-baserte verktøy
     if ($app.id -eq "Aider") {
         if (Get-Command pip -ErrorAction SilentlyContinue) {
             Write-Host "  Installerer via pip..." -ForegroundColor Yellow
             pip install aider-chat 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "  OK: Aider installert" -ForegroundColor Green
-            } else {
-                Write-Host "  FEIL: pip install feilet" -ForegroundColor Red
-                Write-Host "  Lenke: https://aider.chat" -ForegroundColor Yellow
-            }
+            if ($LASTEXITCODE -eq 0) { Write-Host "  OK: Aider installert" -ForegroundColor Green }
+            else { Write-Host "  FEIL: pip install feilet" -ForegroundColor Red; Write-Host "  Lenke: https://aider.chat" -ForegroundColor Yellow }
         } else {
-            Write-Host "  pip ikke funnet — installer Python først (er i winget-listen)" -ForegroundColor Red
+            Write-Host "  pip ikke funnet — installer Python først" -ForegroundColor Red
             Write-Host "  Lenke: https://aider.chat" -ForegroundColor Yellow
         }
         return
     }
     
-    # Prøv Chocolatey først (hvis tilgjengelig og app har choco-id)
     $pm = Get-PackageManager
     if ($pm -eq "choco" -and $app.choco) {
         $success = Install-ChocoApp -app $app
         if ($success) { return }
     }
-    
     if ($pm -eq "scoop") {
         $success = Install-ScoopApp -app $app
         if ($success) { return }
     }
     
-    # Direct download + silent install (fallback)
     $directUrls = @{
         "CCCP" = @{ url = "https://www.cccp-project.net/downloads/latest/CCCP-2022-10-09.exe"; installer = "CCCP-Setup.exe"; args = "/S"; fallback = "https://www.cccp-project.net/" }
         "Helix" = @{ url = "https://github.com/helix-editor/helix/releases/latest/download/helix-x86_64-windows.zip"; installer = "helix.zip"; extract = $true; fallback = "https://helix-editor.com" }
@@ -263,7 +289,6 @@ function Install-ManualApp {
         $tempDir = "$env:TEMP\manual-install"
         if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir | Out-Null }
         $installerPath = Join-Path $tempDir $dl.installer
-        
         Write-Host "  Laster ned $($app.name)..." -ForegroundColor Yellow
         try {
             Invoke-WebRequest -Uri $dl.url -OutFile $installerPath -UseBasicParsing -ErrorAction Stop
@@ -288,14 +313,10 @@ function Install-ManualApp {
     }
 }
 
-# ============================================================
-# HJELPEFUNKSJONER
-# ============================================================
-
 function Show-Header {
     Clear-Host
     Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║         Windows App Installer — winget + auto           ║" -ForegroundColor Cyan
+    Write-Host "║         Windows App Installer — bekreftelse             ║" -ForegroundColor Cyan
     Write-Host "║         https://olewol.github.io/windows-installer/      ║" -ForegroundColor Cyan
     Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
@@ -305,8 +326,8 @@ function Show-Menu {
     Show-Header
     Write-Host "Velg installasjonsmodus:" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  [1] Installer ALLE apper (winget + auto manuell)" -ForegroundColor White
-    Write-Host "  [2] Installer KUN winget-apper (automatisk)" -ForegroundColor White
+    Write-Host "  [1] Installer ALLE apper" -ForegroundColor White
+    Write-Host "  [2] Installer KUN winget-apper" -ForegroundColor White
     Write-Host "  [3] Velg kategorier (core, media, dev, net, tools, adobe, manual)" -ForegroundColor White
     Write-Host "  [4] Velg individuelle apper (av/på)" -ForegroundColor White
     Write-Host "  [5] Kun manuelle apper (auto: choco/npm/pip/direct)" -ForegroundColor White
@@ -349,8 +370,16 @@ function Show-ManualApps {
 
 function Install-Selected {
     param([array]$selected)
-    $wingetApps = $selected | Where-Object { -not $_.manual }
-    $manualApps = $selected | Where-Object { $_.manual }
+    
+    # Bekreftelse med checkmarks
+    $toInstall = Confirm-InstallList -appList $selected -title "Bekreft installasjon"
+    if (-not $toInstall) {
+        Write-Host "Avbrutt." -ForegroundColor Red
+        return
+    }
+    
+    $wingetApps = $toInstall | Where-Object { -not $_.manual }
+    $manualApps = $toInstall | Where-Object { $_.manual }
 
     if ($wingetApps.Count -gt 0) {
         Write-Host "`n=== Installerer $($wingetApps.Count) winget-apper ===" -ForegroundColor Cyan
@@ -360,7 +389,6 @@ function Install-Selected {
     }
 
     if ($manualApps.Count -gt 0) {
-        # Sjekk om vi trenger pakkebehandler
         $needsPM = $manualApps | Where-Object { $_.choco -ne $null }
         if ($needsPM.Count -gt 0 -and -not (Test-Choco) -and -not (Test-Scoop)) {
             Prompt-InstallPackageManager | Out-Null
@@ -406,7 +434,6 @@ if ($List) {
     exit
 }
 
-# Filtrer bort skip-apper
 if ($Skip) {
     $skipList = $Skip -split ',' | ForEach-Object { $_.Trim() }
     $apps = $apps | Where-Object { $skipList -notcontains $_.name }
@@ -418,12 +445,14 @@ if ($All) {
 }
 
 if ($Core) {
-    Install-Selected -selected ($apps | Where-Object { $_.cat -eq "core" })
+    $toInstall = Confirm-InstallList -appList ($apps | Where-Object { $_.cat -eq "core" }) -title "Bekreft core-apper"
+    if ($toInstall) { Install-Selected -selected $toInstall }
     exit
 }
 
 if ($Dev) {
-    Install-Selected -selected ($apps | Where-Object { $_.cat -eq "dev" })
+    $toInstall = Confirm-InstallList -appList ($apps | Where-Object { $_.cat -eq "dev" }) -title "Bekreft dev-apper"
+    if ($toInstall) { Install-Selected -selected $toInstall }
     exit
 }
 
@@ -451,11 +480,7 @@ while ($true) {
             if ($selected.Count -eq 0) {
                 Write-Host "Ingen apper funnet for de valgte kategoriene." -ForegroundColor Red
             } else {
-                Show-AppList -appList $selected -title "Valgte apper"
-                $confirm = Read-Host "Installer disse? (j/n)"
-                if ($confirm -eq "j") {
-                    Install-Selected -selected $selected
-                }
+                Install-Selected -selected $selected
             }
             Read-Host "`nTrykk Enter for å fortsette"
         }
@@ -474,26 +499,24 @@ while ($true) {
             if ($selected.Count -eq 0) {
                 Write-Host "Ingen gyldige valg." -ForegroundColor Red
             } else {
-                Show-AppList -appList $selected -title "Valgte apper"
-                $confirm = Read-Host "Installer disse? (j/n)"
-                if ($confirm -eq "j") {
-                    Install-Selected -selected $selected
-                }
+                Install-Selected -selected $selected
             }
             Read-Host "`nTrykk Enter for å fortsette"
         }
         "5" {
             $manualApps = $apps | Where-Object { $_.manual }
             Show-ManualApps -appList $manualApps
-            $confirm = Read-Host "Installer manuelle apper automatisk? (j/n)"
+            $confirm = Read-Host "Installer manuelle apper? (j/n)"
             if ($confirm -eq "j") {
-                # Sjekk om vi trenger pakkebehandler
                 $needsPM = $manualApps | Where-Object { $_.choco -ne $null }
                 if ($needsPM.Count -gt 0 -and -not (Test-Choco) -and -not (Test-Scoop)) {
                     Prompt-InstallPackageManager | Out-Null
                 }
-                foreach ($app in $manualApps) {
-                    Install-ManualApp -app $app
+                $toInstall = Confirm-InstallList -appList $manualApps -title "Bekreft manuelle apper"
+                if ($toInstall) {
+                    foreach ($app in $toInstall) {
+                        Install-ManualApp -app $app
+                    }
                 }
             }
             Read-Host "`nTrykk Enter for å fortsette"
